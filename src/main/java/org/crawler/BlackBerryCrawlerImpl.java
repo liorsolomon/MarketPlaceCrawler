@@ -1,7 +1,11 @@
 package org.crawler;
 
+import com.gargoylesoftware.htmlunit.BrowserVersion;
 import com.gargoylesoftware.htmlunit.WebClient;
-import com.gargoylesoftware.htmlunit.html.*;
+import com.gargoylesoftware.htmlunit.html.HtmlDivision;
+import com.gargoylesoftware.htmlunit.html.HtmlPage;
+import com.gargoylesoftware.htmlunit.html.HtmlParagraph;
+import com.gargoylesoftware.htmlunit.html.HtmlSpan;
 import org.jaxen.JaxenException;
 
 import java.io.IOException;
@@ -13,21 +17,24 @@ import java.util.regex.Pattern;
 
 /**
  * Created with IntelliJ IDEA.
- * User: liorsolomon
- * Date: 11/25/12
- * Time: 12:55 AM
- * Apple Appstore scrapper class
+ * User: lior
+ * Date: 1/26/13
+ * Time: 2:48 AM
+ * To change this template use File | Settings | File Templates.
  */
-public class AppleCrawlerImpl implements MarketCrawler{
+public class BlackBerryCrawlerImpl implements MarketCrawler {
     HtmlPage page = null;
     List<HtmlDivision> reviewDivs = null;
+    static final String CONST_BLACKBERRY_REVIEWS_DIV = "reviewTileList_box_tileList";
+
 
     @Override
     public void init(String url) throws GeneralSecurityException {
-        WebClient webClient = new WebClient();
+        WebClient webClient = new WebClient(BrowserVersion.FIREFOX_2);
         webClient.setUseInsecureSSL(true);
         webClient.setThrowExceptionOnScriptError(false);
-        webClient.setJavaScriptEnabled(false);
+        webClient.setJavaScriptEnabled(true);
+
         try {
             page = (HtmlPage) webClient.getPage(url);
         } catch (IOException e) {
@@ -37,7 +44,8 @@ public class AppleCrawlerImpl implements MarketCrawler{
         //create array of review html elements
         reviewDivs = new ArrayList<HtmlDivision>();
         try {
-            reviewDivs = (List<HtmlDivision>) page.getByXPath("//div[@class='customer-review']");
+            HtmlDivision division = (HtmlDivision) page.getHtmlElementById(CONST_BLACKBERRY_REVIEWS_DIV);
+            reviewDivs = (List<HtmlDivision>) division.getByXPath("//div[@class='awwsReview']");
         } catch (JaxenException e) {
             e.printStackTrace();
         }
@@ -51,12 +59,12 @@ public class AppleCrawlerImpl implements MarketCrawler{
     @Override
     public String getReviewerName(int reviewNumber) {
         String reviwerName = null;
-        List<HtmlSpan> spans;
+        List<HtmlDivision> divs;
         try {
-            spans = (List<HtmlSpan>) reviewDivs.get(reviewNumber).getByXPath("//span[@class='user-info']");
-            for(HtmlSpan span : spans){
-                reviwerName = span.asText();
-                System.out.println("Name: " + span.asText());
+            divs = (List<HtmlDivision>) reviewDivs.get(reviewNumber).getByXPath("//div[@class='awwsReviewUserName awwsReviewHeader']");
+            for(HtmlDivision div : divs){
+                reviwerName = div.asText();
+                System.out.println("Name: " + div.asText());
             }
         } catch (JaxenException e) {
             e.printStackTrace();
@@ -66,25 +74,23 @@ public class AppleCrawlerImpl implements MarketCrawler{
 
     @Override
     public String getReviewerMobileType(int reviewNumber) {
-        //unsupported by the apple appstore
-        return null;
+        return null;  //Not supported by BlackBerry
     }
 
     @Override
     public String getReviewerMobileVersion(int reviewNumber) {
-        //unsupported by the apple appstore
-        return null;
+        return null;  //Not supported by Blackberry
     }
 
     @Override
     public String getReviewTitle(int reviewNumber) {
         String reviewTitle = null;
-        List<HtmlSpan> spans;
+        List<HtmlDivision> divs;
         try {
-            spans = (List<HtmlSpan>) reviewDivs.get(reviewNumber).getByXPath("//span[@class='customerReviewTitle']");
-            for(HtmlSpan span : spans){
-                reviewTitle = span.asText();
-                System.out.println("Title: " + span.asText());
+            divs = (List<HtmlDivision>) reviewDivs.get(reviewNumber).getByXPath("//span[@class='awwsReviewTitle']");
+            for(HtmlDivision div : divs){
+                reviewTitle = div.asText();
+                System.out.println("Title: " + div.asText());
             }
         } catch (JaxenException e) {
             e.printStackTrace();
@@ -95,12 +101,12 @@ public class AppleCrawlerImpl implements MarketCrawler{
     @Override
     public String getReviewComment(int reviewNumber) {
         String reviewComment = null;
-        List<HtmlParagraph> paragraphs;
+        List<HtmlDivision> divs;
         try {
-            paragraphs = (List<HtmlParagraph>) reviewDivs.get(reviewNumber).getByXPath("//p[@class='content']");
-            for(HtmlParagraph paragraph : paragraphs){
-                reviewComment = paragraph.asText();
-                System.out.println("Comment: " + paragraph.asText());
+            divs = (List<HtmlDivision>) reviewDivs.get(reviewNumber).getByXPath("//div[@class='awwsReviewBody']");
+            for(HtmlDivision div : divs){
+                reviewComment = div.asText();
+                System.out.println("Comment: " + div.asText());
             }
         } catch (JaxenException e) {
             e.printStackTrace();
@@ -113,10 +119,10 @@ public class AppleCrawlerImpl implements MarketCrawler{
         String reviewRank = null;
         List<HtmlDivision> divisions;
         try {
-            divisions = (List<HtmlDivision>) reviewDivs.get(reviewNumber).getByXPath("//div[@class='rating']");
+            divisions = (List<HtmlDivision>) reviewDivs.get(reviewNumber).getByXPath("//div[@class='awwsReviewRating']");
             for(HtmlDivision div : divisions){
-                reviewRank = convertRankStringToNumber(div.getAttribute("aria-label"));
-                System.out.println("rank: " + convertRankStringToNumber(div.getAttribute("aria-label")));
+                reviewRank = convertRankStringToNumber(div.getAttribute("src"));
+                System.out.println("rank: " + reviewRank);
             }
         } catch (JaxenException e) {
             e.printStackTrace();
@@ -131,8 +137,8 @@ public class AppleCrawlerImpl implements MarketCrawler{
         try {
             divisions = (List<HtmlDivision>) reviewDivs.get(reviewNumber).getByXPath("//div[@class='awwsReviewDate awwsReviewHeader']");
             for(HtmlDivision div : divisions){
-                reviewDate = convertRankStringToNumber(div.getAttribute("aria-label"));
-                System.out.println("rank: " + convertRankStringToNumber(div.getAttribute("aria-label")));
+                reviewDate = div.asText();
+                System.out.println("date: " + reviewDate);
             }
         } catch (JaxenException e) {
             e.printStackTrace();
@@ -142,11 +148,16 @@ public class AppleCrawlerImpl implements MarketCrawler{
 
     private String convertRankStringToNumber(String rankString){
         String rankNumber = null;
-        Pattern versionPattern = Pattern.compile("[0-9]");
+        Pattern versionPattern = Pattern.compile("[0-9][0-9]");
         Matcher matcher = versionPattern.matcher(rankString);
         while (matcher.find()) {
             rankNumber = matcher.group(0);
         }
-        return rankNumber;
+        Integer rank = Integer.parseInt(rankNumber)/2;
+        return rank.toString();
+    }
+
+    private String cleanDate(String date){
+        return date.replace("-","");
     }
 }

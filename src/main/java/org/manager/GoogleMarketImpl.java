@@ -22,12 +22,12 @@ public class GoogleMarketImpl implements Market {
 
     @Override
     public void setName(String name) {
-        //To change body of implemented methods use File | Settings | File Templates.
+        this.name = name;
     }
 
     @Override
     public void setUrl(String URL) {
-        //To change body of implemented methods use File | Settings | File Templates.
+        this.url = URL;
     }
 
     @Override

@@ -26,6 +26,8 @@ public class MarketFactory {
             String className = marketBO.getMarketName();
             Package pack = this.getClass().getPackage();
             String packagePath = pack.getName();
+            //TODO: remove the MarketImpl class there is no use for it
+            //I can acivate the crawlers from this class
             try {
                 if(className!=null) {
                     Class cls = Class.forName(packagePath +
